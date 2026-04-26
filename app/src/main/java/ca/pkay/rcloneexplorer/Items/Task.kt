@@ -16,6 +16,7 @@ data class Task(var id: Long) {
     var localPath = ""
     @JsonNames("syncDirection") var direction = 0
     var md5sum = TASK_MD5SUM_DEFAULT
+    var sizeOnly = TASK_SIZE_ONLY_DEFAULT
     var wifionly = TASK_WIFIONLY_DEFAULT
     var filterId: Long? = null
     var deleteExcluded = false
@@ -36,6 +37,7 @@ data class Task(var id: Long) {
         var COLUMN_NAME_LOCAL_PATH = "task_local_path"
         var COLUMN_NAME_SYNC_DIRECTION = "task_direction"
         var COLUMN_NAME_MD5SUM = "task_use_md5sum"
+        var COLUMN_NAME_SIZE_ONLY = "task_use_size_only"
         var COLUMN_NAME_WIFI_ONLY = "task_use_only_wifi"
         var COLUMN_NAME_FILTER_ID = "task_filter_id"
         var COLUMN_NAME_DELETE_EXCLUDED = "task_delete_excluded"
@@ -43,6 +45,7 @@ data class Task(var id: Long) {
         var COLUMN_NAME_ONSUCCESS_FOLLOWUP = "task_onSuccessFollowupTask"
 
         const val TASK_MD5SUM_DEFAULT = false
+        const val TASK_SIZE_ONLY_DEFAULT = false
         const val TASK_WIFIONLY_DEFAULT = false
 
         fun fromString(json: String): Task {
