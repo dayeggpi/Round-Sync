@@ -50,6 +50,7 @@ class TaskActivity : AppCompatActivity(), FolderSelectorCallback{
 
     private lateinit var switchWifi: Switch
     private lateinit var switchMD5sum: Switch
+    private lateinit var switchSizeOnly: Switch
 
 
     private lateinit var filterDropdown: Spinner
@@ -134,6 +135,7 @@ class TaskActivity : AppCompatActivity(), FolderSelectorCallback{
         fab = findViewById(R.id.saveButton)
         switchWifi = findViewById(R.id.task_wifionly)
         switchMD5sum = findViewById(R.id.task_md5sum)
+        switchSizeOnly = findViewById(R.id.task_size_only)
 
         rcloneInstance = Rclone(this)
         dbHandler = DatabaseHandler(this)
@@ -175,6 +177,7 @@ class TaskActivity : AppCompatActivity(), FolderSelectorCallback{
         findViewById<TextView>(R.id.task_title_textfield).text = existingTask?.title
         switchWifi.isChecked = existingTask?.wifionly ?: false
         switchMD5sum.isChecked = existingTask?.md5sum ?: false
+        switchSizeOnly.isChecked = existingTask?.sizeOnly ?: false
         switchDeleteExcluded.isChecked = existingTask?.deleteExcluded ?: false
         prepareSyncDirectionDropdown()
         prepareLocal()
@@ -250,6 +253,7 @@ class TaskActivity : AppCompatActivity(), FolderSelectorCallback{
 
         taskToPopulate.wifionly = switchWifi.isChecked
         taskToPopulate.md5sum = switchMD5sum.isChecked
+        taskToPopulate.sizeOnly = switchSizeOnly.isChecked
         taskToPopulate.deleteExcluded = switchDeleteExcluded.isChecked
         taskToPopulate.filterId = if(filterDropdown.selectedItemPosition == 0 || filterDropdown.selectedItemPosition == -1) null else filterItems[filterDropdown.selectedItemPosition - 1].id
         taskToPopulate.onFailFollowup = (onFailDropdown.selectedItem as TaskNameIdPair).id
