@@ -17,6 +17,7 @@ import ca.pkay.rcloneexplorer.Database.DatabaseInfo.Companion.SQL_UPDATE_TASK_AD
 import ca.pkay.rcloneexplorer.Database.DatabaseInfo.Companion.SQL_UPDATE_TASK_ADD_FILTER_ID
 import ca.pkay.rcloneexplorer.Database.DatabaseInfo.Companion.SQL_UPDATE_TASK_ADD_FOLLOWUPS_FAIL
 import ca.pkay.rcloneexplorer.Database.DatabaseInfo.Companion.SQL_UPDATE_TASK_ADD_FOLLOWUPS_SUCCESS
+import ca.pkay.rcloneexplorer.Database.DatabaseInfo.Companion.SQL_UPDATE_TASK_ADD_SIZE_ONLY
 import ca.pkay.rcloneexplorer.Database.DatabaseInfo.Companion.SQL_UPDATE_TRIGGER_ADD_TYPE
 import ca.pkay.rcloneexplorer.Items.Filter
 import ca.pkay.rcloneexplorer.Items.Task
@@ -37,6 +38,7 @@ class DatabaseHandler(context: Context?) :
         sqLiteDatabase.execSQL(SQL_UPDATE_TASK_ADD_DELETE_EXCLUDED)
         sqLiteDatabase.execSQL(SQL_UPDATE_TASK_ADD_FOLLOWUPS_FAIL)
         sqLiteDatabase.execSQL(SQL_UPDATE_TASK_ADD_FOLLOWUPS_SUCCESS)
+        sqLiteDatabase.execSQL(SQL_UPDATE_TASK_ADD_SIZE_ONLY)
     }
 
     override fun onUpgrade(sqLiteDatabase: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
@@ -58,6 +60,9 @@ class DatabaseHandler(context: Context?) :
         if (oldVersion < 6) {
             sqLiteDatabase.execSQL(SQL_UPDATE_TASK_ADD_FOLLOWUPS_FAIL)
             sqLiteDatabase.execSQL(SQL_UPDATE_TASK_ADD_FOLLOWUPS_SUCCESS)
+        }
+        if (oldVersion < 7) {
+            sqLiteDatabase.execSQL(SQL_UPDATE_TASK_ADD_SIZE_ONLY)
         }
     }
 
@@ -139,6 +144,7 @@ class DatabaseHandler(context: Context?) :
             Task.COLUMN_NAME_LOCAL_PATH,
             Task.COLUMN_NAME_SYNC_DIRECTION,
             Task.COLUMN_NAME_MD5SUM,
+            Task.COLUMN_NAME_SIZE_ONLY,
             Task.COLUMN_NAME_WIFI_ONLY,
             Task.COLUMN_NAME_FILTER_ID,
             Task.COLUMN_NAME_DELETE_EXCLUDED,
@@ -155,11 +161,12 @@ class DatabaseHandler(context: Context?) :
         task.localPath = cursor.getString(5)
         task.direction = cursor.getInt(6)
         task.md5sum = getBoolean(cursor, 7)
-        task.wifionly = getBoolean(cursor, 8)
-        task.filterId = cursor.getLong(9)
-        task.deleteExcluded = getBoolean(cursor, 10)
-        task.onFailFollowup = cursor.getLong(11)
-        task.onSuccessFollowup = cursor.getLong(12)
+        task.sizeOnly = getBoolean(cursor, 8)
+        task.wifionly = getBoolean(cursor, 9)
+        task.filterId = if (cursor.isNull(10)) null else cursor.getLong(10)
+        task.deleteExcluded = getBoolean(cursor, 11)
+        task.onFailFollowup = if (cursor.isNull(12)) null else cursor.getLong(12)
+        task.onSuccessFollowup = if (cursor.isNull(13)) null else cursor.getLong(13)
         return task
     }
 
@@ -187,6 +194,7 @@ class DatabaseHandler(context: Context?) :
         values.put(Task.COLUMN_NAME_REMOTE_TYPE, task.remoteType)
         values.put(Task.COLUMN_NAME_SYNC_DIRECTION, task.direction)
         values.put(Task.COLUMN_NAME_MD5SUM, task.md5sum)
+        values.put(Task.COLUMN_NAME_SIZE_ONLY, task.sizeOnly)
         values.put(Task.COLUMN_NAME_WIFI_ONLY, task.wifionly)
         values.put(Task.COLUMN_NAME_FILTER_ID, task.filterId)
         values.put(Task.COLUMN_NAME_DELETE_EXCLUDED, task.deleteExcluded)
