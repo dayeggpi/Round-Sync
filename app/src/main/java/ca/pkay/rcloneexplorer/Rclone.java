@@ -683,16 +683,23 @@ public class Rclone {
     }
 
     public Process sync(RemoteItem remoteItem, String localPath, String remotePath, int syncDirection, boolean useMD5Sum, ArrayList<FilterEntry> filters, boolean deleteExcluded) {
+        return sync(remoteItem, localPath, remotePath, syncDirection, useMD5Sum, filters, deleteExcluded, false);
+    }
+
+    public Process sync(RemoteItem remoteItem, String localPath, String remotePath, int syncDirection, boolean useMD5Sum, ArrayList<FilterEntry> filters, boolean deleteExcluded, boolean sizeOnly) {
         String[] command;
         String remoteName = remoteItem.getName();
         String localRemotePath = (remoteItem.isRemoteType(RemoteItem.LOCAL)) ? getLocalRemotePathPrefix(remoteItem, context)  + "/" : "";
         String remoteSection = (remotePath.compareTo("//" + remoteName) == 0) ? remoteName + ":" + localRemotePath : remoteName + ":" + localRemotePath + remotePath;
 
-        ArrayList<String> defaultParameter = new ArrayList<>(Arrays.asList("--transfers", "1", "--stats=1s", "--stats-log-level", "NOTICE", "--use-json-log"));
+        ArrayList<String> defaultParameter = new ArrayList<>(Arrays.asList("--transfers", "1", "--stats=1s", "--stats-log-level", "NOTICE", "--use-json-log", "--exclude", "*.partial"));
         ArrayList<String> directionParameter = new ArrayList<>();
 
         if(useMD5Sum){
             defaultParameter.add("--checksum");
+        }
+        if(sizeOnly){
+            defaultParameter.add("--size-only");
         }
         if(deleteExcluded){
             defaultParameter.add("--delete-excluded");

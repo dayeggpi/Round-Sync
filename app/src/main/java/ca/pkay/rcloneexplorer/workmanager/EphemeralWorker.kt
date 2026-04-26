@@ -214,15 +214,10 @@ class EphemeralWorker (private var mContext: Context, workerParams: WorkerParame
                     val line = iterator.next()
                     try {
                         val logline = JSONObject(line)
-                        //todo: migrate this to StatusObject, so that we can handle everything properly.
-                        if (logline.getString("level") == "error") {
-                            if (sIsLoggingEnabled) {
-                                log2File?.log(line)
-                            }
-                            statusObject.parseLoglineToStatusObject(logline)
-                        } else if (logline.getString("level") == "warning") {
-                            statusObject.parseLoglineToStatusObject(logline)
+                        if (logline.getString("level") == "error" && sIsLoggingEnabled) {
+                            log2File?.log(line)
                         }
+                        statusObject.parseLoglineToStatusObject(logline)
 
                         updateForegroundNotification(mNotificationManager?.updateNotification(
                             title,
@@ -233,7 +228,6 @@ class EphemeralWorker (private var mContext: Context, workerParams: WorkerParame
                         ))
                     } catch (e: JSONException) {
                         Log.e(tag(), "Error: the offending line: $line")
-                        //FLog.e(TAG, "onHandleIntent: error reading json", e)
                     }
                 }
             } catch (e: InterruptedIOException) {

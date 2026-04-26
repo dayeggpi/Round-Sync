@@ -77,6 +77,7 @@ class SyncWorker (private var mContext: Context, workerParams: WorkerParameters)
     private var sRcloneProcess: Process? = null
     private val statusObject = StatusObject(mContext)
     private var failureReason = FAILURE_REASON.NO_FAILURE
+    private val rawRcloneErrors = StringBuilder()
     private var endNotificationAlreadyPosted = false
     private var silentRun = false
     private val ongoingNotificationID = Random().nextInt()
@@ -165,7 +166,8 @@ class SyncWorker (private var mContext: Context, workerParams: WorkerParameters)
                 mTask.direction,
                 mTask.md5sum,
                 taskFilterList,
-                mTask.deleteExcluded
+                mTask.deleteExcluded,
+                mTask.sizeOnly
             )
             handleSync(mTitle)
             sendUploadFinishedBroadcast(remoteItem.name, mTask.remotePath)
@@ -183,15 +185,10 @@ class SyncWorker (private var mContext: Context, workerParams: WorkerParameters)
                     val line = iterator.next()
                     try {
                         val logline = JSONObject(line)
-                        //todo: migrate this to StatusObject, so that we can handle everything properly.
-                        if (logline.getString("level") == "error") {
-                            if (sIsLoggingEnabled) {
-                                log2File?.log(line)
-                            }
-                            statusObject.parseLoglineToStatusObject(logline)
-                        } else if (logline.getString("level") == "warning") {
-                            statusObject.parseLoglineToStatusObject(logline)
+                        if (logline.getString("level") == "error" && sIsLoggingEnabled) {
+                            log2File?.log(line)
                         }
+                        statusObject.parseLoglineToStatusObject(logline)
 
                         updateForegroundNotification(mNotificationManager.updateSyncNotification(
                             title,
@@ -202,7 +199,7 @@ class SyncWorker (private var mContext: Context, workerParams: WorkerParameters)
                         ))
                     } catch (e: JSONException) {
                         FLog.e(TAG, "SyncService-Error: the offending line: $line")
-                        //FLog.e(TAG, "onHandleIntent: error reading json", e)
+                        rawRcloneErrors.appendLine(line)
                     }
                 }
             } catch (e: InterruptedIOException) {
@@ -212,11 +209,15 @@ class SyncWorker (private var mContext: Context, workerParams: WorkerParameters)
             }
             try {
                 localProcessReference.waitFor()
+                if (localProcessReference.exitValue() != 0) {
+                    failureReason = FAILURE_REASON.RCLONE_ERROR
+                }
             } catch (e: InterruptedException) {
                 FLog.e(TAG, "onHandleIntent: error waiting for process", e)
             }
         } else {
             log("Sync: No Rclone Process!")
+            failureReason = FAILURE_REASON.RCLONE_ERROR
         }
         mNotificationManager.cancelSyncNotification(ongoingNotificationID)
     }
@@ -321,16 +322,14 @@ class SyncWorker (private var mContext: Context, workerParams: WorkerParameters)
 
     private fun showFailNotification(notificationId: Int, content: String, wasCancelled: Boolean = false) {
         var text = content
-        //Todo: check if we should also add errors on success
         statusObject.printErrors()
         val errors = statusObject.getAllErrorMessages()
         if (errors.isNotEmpty()) {
-            text += """
-                        
-                        
-                        
-                        ${statusObject.getAllErrorMessages()}
-                        """.trimIndent()
+            text += "\n\n${statusObject.getAllErrorMessages()}"
+        }
+        val rawErrors = rawRcloneErrors.toString().trim()
+        if (rawErrors.isNotEmpty()) {
+            text += "\n\n$rawErrors"
         }
 
         var notifyTitle = mContext.getString(R.string.operation_failed)
