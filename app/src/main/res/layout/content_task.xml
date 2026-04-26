@@ -66,6 +66,20 @@
                         android:text="@string/task_hint_md5checksum" />
 
                     <Switch
+                        android:id="@+id/task_size_only"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="48dp"
+                        android:text="@string/use_size_only" />
+
+                    <TextView
+                        android:id="@+id/task_size_only_hint"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp"
+                        android:text="@string/task_hint_size_only" />
+
+                    <Switch
                         android:id="@+id/task_wifionly"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
